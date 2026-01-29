@@ -1,0 +1,314 @@
+{
+  "references": [
+    {
+      "id": "select",
+      "title": "SELECT",
+      "description": "データベースからデータを取得するための基本的な句です。取得したいカラムを指定します。",
+      "syntax": "SELECT column1, column2, ... FROM table_name;",
+      "examples": [
+        {
+          "title": "全カラムを取得",
+          "code": "SELECT * FROM users;",
+          "explanation": "アスタリスク(*)を使うと、テーブルの全カラムを取得できます。"
+        },
+        {
+          "title": "特定のカラムを取得",
+          "code": "SELECT user_id, ad_source, device FROM users;",
+          "explanation": "必要なカラムのみを指定して取得します。パフォーマンスの観点から、必要なカラムのみを指定することが推奨されます。"
+        },
+        {
+          "title": "エイリアスを使用",
+          "code": "SELECT user_id AS id, ad_source AS source FROM users;",
+          "explanation": "ASキーワードでカラムに別名（エイリアス）を付けることができます。"
+        }
+      ],
+      "relatedProblems": ["p001", "p002", "p003"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "where",
+      "title": "WHERE",
+      "description": "条件を指定してデータをフィルタリングします。",
+      "syntax": "SELECT columns FROM table WHERE condition;",
+      "examples": [
+        {
+          "title": "等価条件",
+          "code": "SELECT * FROM users WHERE device = 'ios';",
+          "explanation": "deviceが'ios'のレコードのみを取得します。"
+        },
+        {
+          "title": "複数条件（AND）",
+          "code": "SELECT * FROM users WHERE device = 'ios' AND ad_source = 'meta';",
+          "explanation": "ANDで複数の条件を組み合わせます。両方の条件を満たすレコードのみ取得されます。"
+        },
+        {
+          "title": "複数条件（OR）",
+          "code": "SELECT * FROM users WHERE ad_source = 'meta' OR ad_source = 'google';",
+          "explanation": "ORで複数の条件を組み合わせます。いずれかの条件を満たすレコードが取得されます。"
+        }
+      ],
+      "relatedProblems": [],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "group-by",
+      "title": "GROUP BY",
+      "description": "指定したカラムでデータをグループ化し、集計関数と組み合わせて使用します。",
+      "syntax": "SELECT column, aggregate_function(column) FROM table GROUP BY column;",
+      "examples": [
+        {
+          "title": "単一カラムでグループ化",
+          "code": "SELECT ad_source, COUNT(*) as user_count FROM users GROUP BY ad_source;",
+          "explanation": "ad_sourceごとにレコードをグループ化し、各グループの件数を数えます。"
+        },
+        {
+          "title": "複数カラムでグループ化",
+          "code": "SELECT ad_source, device, COUNT(*) as count FROM users GROUP BY ad_source, device;",
+          "explanation": "ad_sourceとdeviceの組み合わせごとにグループ化します。"
+        }
+      ],
+      "relatedProblems": ["p001", "p002", "p003", "p004", "p005"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "order-by",
+      "title": "ORDER BY",
+      "description": "結果セットを指定したカラムで並べ替えます。",
+      "syntax": "SELECT columns FROM table ORDER BY column [ASC|DESC];",
+      "examples": [
+        {
+          "title": "昇順（デフォルト）",
+          "code": "SELECT * FROM users ORDER BY registered_at;",
+          "explanation": "登録日時の古い順に並べ替えます。ASCは省略可能です。"
+        },
+        {
+          "title": "降順",
+          "code": "SELECT * FROM users ORDER BY registered_at DESC;",
+          "explanation": "登録日時の新しい順に並べ替えます。"
+        },
+        {
+          "title": "複数カラムで並べ替え",
+          "code": "SELECT * FROM users ORDER BY ad_source ASC, registered_at DESC;",
+          "explanation": "まずad_sourceで昇順、同じad_source内ではregistered_atで降順に並べます。"
+        }
+      ],
+      "relatedProblems": ["p001"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "count",
+      "title": "COUNT",
+      "description": "行数をカウントする集計関数です。",
+      "syntax": "COUNT(*) または COUNT(column) または COUNT(DISTINCT column)",
+      "examples": [
+        {
+          "title": "全行数をカウント",
+          "code": "SELECT COUNT(*) FROM users;",
+          "explanation": "テーブルの総行数を返します。"
+        },
+        {
+          "title": "特定カラムのNULL以外をカウント",
+          "code": "SELECT COUNT(payment_id) FROM payments;",
+          "explanation": "payment_idがNULLでない行数を返します。"
+        },
+        {
+          "title": "ユニークな値をカウント",
+          "code": "SELECT COUNT(DISTINCT user_id) FROM payments;",
+          "explanation": "重複を除いたユニークなuser_idの数を返します。課金したユーザー数を数えるのに便利です。"
+        }
+      ],
+      "relatedProblems": ["p001", "p002", "p003", "p005"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "sum",
+      "title": "SUM",
+      "description": "数値カラムの合計を計算する集計関数です。",
+      "syntax": "SUM(column)",
+      "examples": [
+        {
+          "title": "合計を計算",
+          "code": "SELECT SUM(amount) as total_revenue FROM payments;",
+          "explanation": "全課金額の合計を計算します。"
+        },
+        {
+          "title": "グループごとの合計",
+          "code": "SELECT user_id, SUM(amount) as user_total FROM payments GROUP BY user_id;",
+          "explanation": "ユーザーごとの課金額合計を計算します。"
+        }
+      ],
+      "relatedProblems": ["p004", "p006", "p007"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "left-join",
+      "title": "LEFT JOIN",
+      "description": "左側のテーブルの全レコードと、右側のテーブルの一致するレコードを結合します。一致しない場合はNULLになります。",
+      "syntax": "SELECT columns FROM table1 LEFT JOIN table2 ON table1.column = table2.column;",
+      "examples": [
+        {
+          "title": "基本的なLEFT JOIN",
+          "code": "SELECT u.user_id, p.amount FROM users u LEFT JOIN payments p ON u.user_id = p.user_id;",
+          "explanation": "全ユーザーと、課金情報がある場合はその情報を結合します。課金していないユーザーのamountはNULLになります。"
+        },
+        {
+          "title": "COALESCEと組み合わせ",
+          "code": "SELECT u.user_id, COALESCE(SUM(p.amount), 0) as total FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.user_id;",
+          "explanation": "NULLを0に変換して、課金していないユーザーも0として表示します。"
+        }
+      ],
+      "relatedProblems": ["p004", "p005", "p006", "p009", "p010"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "join",
+      "title": "JOIN (INNER JOIN)",
+      "description": "両方のテーブルで一致するレコードのみを結合します。",
+      "syntax": "SELECT columns FROM table1 JOIN table2 ON table1.column = table2.column;",
+      "examples": [
+        {
+          "title": "基本的なJOIN",
+          "code": "SELECT u.user_id, p.amount FROM users u JOIN payments p ON u.user_id = p.user_id;",
+          "explanation": "課金があるユーザーのみを取得します。課金していないユーザーは結果に含まれません。"
+        }
+      ],
+      "relatedProblems": ["p007"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "with",
+      "title": "WITH (CTE)",
+      "description": "共通テーブル式（Common Table Expression）を定義します。複雑なクエリを分かりやすく書けます。",
+      "syntax": "WITH cte_name AS (SELECT ...) SELECT ... FROM cte_name;",
+      "examples": [
+        {
+          "title": "基本的なCTE",
+          "code": "WITH user_totals AS (\n  SELECT user_id, SUM(amount) as total\n  FROM payments\n  GROUP BY user_id\n)\nSELECT * FROM user_totals WHERE total > 5000;",
+          "explanation": "まずユーザーごとの課金合計を計算し、その結果を使って5000円以上のユーザーを抽出します。"
+        },
+        {
+          "title": "複数のCTE",
+          "code": "WITH revenue AS (\n  SELECT ad_source, SUM(amount) as total\n  FROM users u JOIN payments p ON u.user_id = p.user_id\n  GROUP BY ad_source\n),\ncosts AS (\n  SELECT ad_source, SUM(cost) as total\n  FROM ad_costs\n  GROUP BY ad_source\n)\nSELECT r.ad_source, r.total as revenue, c.total as cost\nFROM revenue r JOIN costs c ON r.ad_source = c.ad_source;",
+          "explanation": "収益と費用を別々のCTEで計算し、最後に結合してROASを算出する準備をします。"
+        }
+      ],
+      "relatedProblems": ["p007", "p010"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "coalesce",
+      "title": "COALESCE",
+      "description": "NULLを別の値に置き換える関数です。最初のNULLでない値を返します。",
+      "syntax": "COALESCE(value1, value2, ...)",
+      "examples": [
+        {
+          "title": "NULLを0に変換",
+          "code": "SELECT user_id, COALESCE(SUM(amount), 0) as total FROM payments GROUP BY user_id;",
+          "explanation": "課金がないユーザー（SUM結果がNULL）を0として表示します。"
+        }
+      ],
+      "relatedProblems": ["p004", "p008", "p010"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "round",
+      "title": "ROUND",
+      "description": "数値を指定した桁数で四捨五入します。",
+      "syntax": "ROUND(value, decimal_places)",
+      "examples": [
+        {
+          "title": "小数第1位まで",
+          "code": "SELECT ROUND(123.456, 1);  -- 結果: 123.5",
+          "explanation": "小数第1位まで四捨五入します。"
+        },
+        {
+          "title": "整数に丸める",
+          "code": "SELECT ROUND(123.456, 0);  -- 結果: 123",
+          "explanation": "整数に四捨五入します。"
+        }
+      ],
+      "relatedProblems": ["p005", "p006", "p008", "p009"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "format-timestamp",
+      "title": "FORMAT_TIMESTAMP",
+      "description": "タイムスタンプを指定したフォーマットの文字列に変換します。BigQuery固有の関数です。",
+      "syntax": "FORMAT_TIMESTAMP(format_string, timestamp)",
+      "examples": [
+        {
+          "title": "年月を抽出",
+          "code": "SELECT FORMAT_TIMESTAMP('%Y-%m', registered_at) as month FROM users;",
+          "explanation": "'2024-07'のような年月形式の文字列を返します。"
+        },
+        {
+          "title": "日付のみ抽出",
+          "code": "SELECT FORMAT_TIMESTAMP('%Y-%m-%d', registered_at) as date FROM users;",
+          "explanation": "'2024-07-15'のような日付形式の文字列を返します。"
+        }
+      ],
+      "relatedProblems": ["p002"],
+      "isBigQuerySpecific": true
+    },
+    {
+      "id": "count-distinct",
+      "title": "COUNT(DISTINCT)",
+      "description": "ユニークな値の数をカウントします。重複を除外して集計したい場合に使用します。",
+      "syntax": "COUNT(DISTINCT column)",
+      "examples": [
+        {
+          "title": "ユニークユーザー数",
+          "code": "SELECT COUNT(DISTINCT user_id) as unique_users FROM payments;",
+          "explanation": "課金したユニークなユーザー数を返します。同じユーザーが複数回課金しても1としてカウントされます。"
+        },
+        {
+          "title": "グループごとのユニーク数",
+          "code": "SELECT ad_source, COUNT(DISTINCT user_id) as users FROM users GROUP BY ad_source;",
+          "explanation": "広告ソース別のユニークユーザー数を集計します。"
+        }
+      ],
+      "relatedProblems": ["p005", "p006", "p008", "p009"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "avg",
+      "title": "AVG",
+      "description": "数値カラムの平均値を計算する集計関数です。",
+      "syntax": "AVG(column)",
+      "examples": [
+        {
+          "title": "平均を計算",
+          "code": "SELECT AVG(amount) as avg_payment FROM payments;",
+          "explanation": "全課金の平均額を計算します。"
+        },
+        {
+          "title": "グループごとの平均",
+          "code": "SELECT user_id, AVG(amount) as avg_per_user FROM payments GROUP BY user_id;",
+          "explanation": "ユーザーごとの平均課金額を計算します。"
+        }
+      ],
+      "relatedProblems": ["p010"],
+      "isBigQuerySpecific": false
+    },
+    {
+      "id": "having",
+      "title": "HAVING",
+      "description": "GROUP BYで集計した結果に対して条件を指定します。WHEREはグループ化前、HAVINGはグループ化後のフィルタリングに使います。",
+      "syntax": "SELECT columns FROM table GROUP BY column HAVING condition;",
+      "examples": [
+        {
+          "title": "集計結果でフィルタリング",
+          "code": "SELECT user_id, SUM(amount) as total FROM payments GROUP BY user_id HAVING total > 5000;",
+          "explanation": "課金合計が5000円を超えるユーザーのみを表示します。"
+        },
+        {
+          "title": "件数でフィルタリング",
+          "code": "SELECT ad_source, COUNT(*) as count FROM users GROUP BY ad_source HAVING count >= 100;",
+          "explanation": "ユーザー数が100人以上の広告ソースのみを表示します。"
+        }
+      ],
+      "relatedProblems": ["p010"],
+      "isBigQuerySpecific": false
+    }
+  ]
+}

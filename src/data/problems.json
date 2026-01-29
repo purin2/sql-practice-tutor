@@ -1,0 +1,154 @@
+{
+  "problems": [
+    {
+      "id": "p001",
+      "title": "広告ソース別のユーザー数を集計",
+      "description": "マーケティング部門から「各広告チャネルからの流入ユーザー数を知りたい」と依頼がありました。広告ソース別にユーザー数を集計し、多い順に並べてください。",
+      "difficulty": "beginner",
+      "category": "basic",
+      "requiredTables": ["users"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersテーブルのad_sourceカラムを使用します" },
+        { "level": 2, "type": "clause", "content": "GROUP BY句でad_sourceごとにグループ化し、COUNT(*)で件数を数えます" },
+        { "level": 3, "type": "structure", "content": "SELECT ad_source, COUNT(*) as user_count FROM users GROUP BY ... ORDER BY ... DESC" }
+      ],
+      "answer": "SELECT ad_source, COUNT(*) as user_count FROM users GROUP BY ad_source ORDER BY user_count DESC;",
+      "relatedSyntax": ["select", "group-by", "count", "order-by"]
+    },
+    {
+      "id": "p002",
+      "title": "月別の登録者数を集計",
+      "description": "経営企画部から「月ごとの新規登録者数の推移を見たい」と要望がありました。登録月別にユーザー数を集計してください。",
+      "difficulty": "beginner",
+      "category": "basic",
+      "requiredTables": ["users"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersテーブルのregistered_atカラムを使用します" },
+        { "level": 2, "type": "clause", "content": "FORMAT_TIMESTAMP関数で年月を抽出し、GROUP BYで集計します" },
+        { "level": 3, "type": "structure", "content": "SELECT FORMAT_TIMESTAMP('%Y-%m', registered_at) as month, COUNT(*) FROM users GROUP BY month ORDER BY month" }
+      ],
+      "answer": "SELECT FORMAT_TIMESTAMP('%Y-%m', registered_at) as month, COUNT(*) as registrations FROM users GROUP BY month ORDER BY month;",
+      "relatedSyntax": ["select", "group-by", "format-timestamp"]
+    },
+    {
+      "id": "p003",
+      "title": "デバイス別のユーザー数",
+      "description": "プロダクト部門から「iOS と Android のユーザー比率を知りたい」と依頼がありました。デバイス別のユーザー数を集計してください。",
+      "difficulty": "beginner",
+      "category": "basic",
+      "requiredTables": ["users"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersテーブルのdeviceカラムを使用します" },
+        { "level": 2, "type": "clause", "content": "GROUP BY句でdeviceごとに集計します" },
+        { "level": 3, "type": "structure", "content": "SELECT device, COUNT(*) FROM users GROUP BY device" }
+      ],
+      "answer": "SELECT device, COUNT(*) as user_count FROM users GROUP BY device;",
+      "relatedSyntax": ["select", "group-by", "count"]
+    },
+    {
+      "id": "p004",
+      "title": "ユーザーごとの課金額合計（LTV）",
+      "description": "ファイナンス部門から「各ユーザーの累計課金額を知りたい」と依頼がありました。ユーザーごとの課金額合計を算出してください。課金していないユーザーも含めて0円と表示してください。",
+      "difficulty": "intermediate",
+      "category": "aggregation",
+      "requiredTables": ["users", "payments"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersテーブルとpaymentsテーブルをJOINします" },
+        { "level": 2, "type": "clause", "content": "LEFT JOINを使い、課金がないユーザーも含めます。COALESCEで0に変換します" },
+        { "level": 3, "type": "structure", "content": "SELECT u.user_id, COALESCE(SUM(p.amount), 0) as total_payment FROM users u LEFT JOIN payments p ON ... GROUP BY u.user_id" }
+      ],
+      "answer": "SELECT u.user_id, u.ad_source, COALESCE(SUM(p.amount), 0) as total_payment FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.user_id, u.ad_source;",
+      "relatedSyntax": ["select", "left-join", "coalesce", "sum", "group-by"]
+    },
+    {
+      "id": "p005",
+      "title": "広告ソース別の課金率",
+      "description": "マーケティング部門から「どの広告チャネルが課金に繋がりやすいか分析したい」と依頼がありました。広告ソース別の課金率（課金ユーザー数 / 全ユーザー数）を算出してください。",
+      "difficulty": "intermediate",
+      "category": "aggregation",
+      "requiredTables": ["users", "payments"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersテーブルとpaymentsテーブルを結合します" },
+        { "level": 2, "type": "clause", "content": "COUNT(DISTINCT)で重複を除き、課金ユーザー数と全ユーザー数を算出します" },
+        { "level": 3, "type": "structure", "content": "課金率 = COUNT(DISTINCT 課金ユーザー) / COUNT(DISTINCT 全ユーザー) * 100" }
+      ],
+      "answer": "SELECT u.ad_source, COUNT(DISTINCT u.user_id) as total_users, COUNT(DISTINCT p.user_id) as paying_users, ROUND(COUNT(DISTINCT p.user_id) * 100.0 / COUNT(DISTINCT u.user_id), 1) as payment_rate FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.ad_source ORDER BY payment_rate DESC;",
+      "relatedSyntax": ["select", "left-join", "count-distinct", "round", "group-by"]
+    },
+    {
+      "id": "p006",
+      "title": "広告ソース別のLTV",
+      "description": "経営企画部から「広告チャネル別のユーザーあたり平均収益（LTV）を算出してほしい」と依頼がありました。",
+      "difficulty": "intermediate",
+      "category": "analysis",
+      "requiredTables": ["users", "payments"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersとpaymentsを結合し、広告ソース別に集計します" },
+        { "level": 2, "type": "clause", "content": "LTV = 総課金額 / ユーザー数 で算出します" },
+        { "level": 3, "type": "structure", "content": "SELECT ad_source, SUM(amount) / COUNT(DISTINCT user_id) as ltv FROM ... GROUP BY ad_source" }
+      ],
+      "answer": "SELECT u.ad_source, COUNT(DISTINCT u.user_id) as users, SUM(p.amount) as total_revenue, ROUND(SUM(p.amount) * 1.0 / COUNT(DISTINCT u.user_id), 0) as ltv FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.ad_source ORDER BY ltv DESC;",
+      "relatedSyntax": ["select", "left-join", "sum", "count-distinct", "round"]
+    },
+    {
+      "id": "p007",
+      "title": "広告ソース別のROAS",
+      "description": "マーケティング部門から「広告費用対効果（ROAS）を分析したい」と依頼がありました。各広告ソースの総収益と総広告費用を比較し、ROASを算出してください。",
+      "difficulty": "advanced",
+      "category": "analysis",
+      "requiredTables": ["users", "payments", "ad_costs"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "users, payments, ad_costsの3テーブルを使用します" },
+        { "level": 2, "type": "clause", "content": "WITH句（CTE）を使って収益と費用を別々に集計し、最後に結合します" },
+        { "level": 3, "type": "structure", "content": "WITH revenue AS (...), costs AS (...) SELECT ... ROAS = revenue / cost * 100" }
+      ],
+      "answer": "WITH revenue AS (SELECT u.ad_source, SUM(p.amount) as total_revenue FROM users u JOIN payments p ON u.user_id = p.user_id GROUP BY u.ad_source), costs AS (SELECT ad_source, SUM(cost) as total_cost FROM ad_costs GROUP BY ad_source) SELECT r.ad_source, r.total_revenue, c.total_cost, ROUND(r.total_revenue * 100.0 / c.total_cost, 1) as roas_percent FROM revenue r JOIN costs c ON r.ad_source = c.ad_source ORDER BY roas_percent DESC;",
+      "relatedSyntax": ["with", "join", "sum", "group-by"]
+    },
+    {
+      "id": "p008",
+      "title": "キャンペーン別パフォーマンス",
+      "description": "マーケティング部門から「各キャンペーンの成果を一覧で見たい」と依頼がありました。キャンペーン別にユーザー数、課金者数、CVR、収益を算出してください。",
+      "difficulty": "advanced",
+      "category": "analysis",
+      "requiredTables": ["users", "payments"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersテーブルのcampaignカラムでグループ化します" },
+        { "level": 2, "type": "clause", "content": "CVR（コンバージョン率）= 課金者数 / ユーザー数 × 100" },
+        { "level": 3, "type": "structure", "content": "SELECT campaign, COUNT(users), COUNT(payers), CVR, SUM(revenue) FROM ... GROUP BY campaign" }
+      ],
+      "answer": "SELECT u.campaign, u.ad_source, COUNT(DISTINCT u.user_id) as users, COUNT(DISTINCT p.user_id) as payers, ROUND(COUNT(DISTINCT p.user_id) * 100.0 / COUNT(DISTINCT u.user_id), 1) as cvr, COALESCE(SUM(p.amount), 0) as revenue FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.campaign, u.ad_source ORDER BY revenue DESC;",
+      "relatedSyntax": ["select", "left-join", "count-distinct", "round", "coalesce"]
+    },
+    {
+      "id": "p009",
+      "title": "年齢層×デバイス別の課金率",
+      "description": "プロダクト部門から「どのセグメントが課金しやすいか分析したい」と依頼がありました。年齢層とデバイスの組み合わせ別に課金率を算出してください。",
+      "difficulty": "intermediate",
+      "category": "segmentation",
+      "requiredTables": ["users", "payments"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "usersのage_groupとdeviceでグループ化します" },
+        { "level": 2, "type": "clause", "content": "複数カラムでGROUP BYを行います" },
+        { "level": 3, "type": "structure", "content": "SELECT age_group, device, COUNT(*), 課金率 FROM ... GROUP BY age_group, device" }
+      ],
+      "answer": "SELECT u.age_group, u.device, COUNT(DISTINCT u.user_id) as users, COUNT(DISTINCT p.user_id) as payers, ROUND(COUNT(DISTINCT p.user_id) * 100.0 / COUNT(DISTINCT u.user_id), 1) as payment_rate FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.age_group, u.device ORDER BY u.age_group, u.device;",
+      "relatedSyntax": ["select", "left-join", "group-by", "count-distinct"]
+    },
+    {
+      "id": "p010",
+      "title": "高LTVユーザーの特徴",
+      "description": "経営企画部から「高額課金ユーザーにはどんな傾向があるか分析したい」と依頼がありました。LTV5000円以上のユーザーについて、広告ソース・デバイス・年齢層別に人数と平均LTVを集計してください。",
+      "difficulty": "advanced",
+      "category": "segmentation",
+      "requiredTables": ["users", "payments"],
+      "hints": [
+        { "level": 1, "type": "table", "content": "まずユーザーごとのLTVを算出し、そこからフィルタリングします" },
+        { "level": 2, "type": "clause", "content": "WITH句でユーザーごとのLTVを算出し、WHERE句で5000以上に絞り込みます" },
+        { "level": 3, "type": "structure", "content": "WITH user_ltv AS (SELECT user_id, SUM(amount) as ltv ...) SELECT ... FROM user_ltv WHERE ltv >= 5000 GROUP BY ..." }
+      ],
+      "answer": "WITH user_ltv AS (SELECT u.user_id, u.ad_source, u.device, u.age_group, u.region, COALESCE(SUM(p.amount), 0) as ltv FROM users u LEFT JOIN payments p ON u.user_id = p.user_id GROUP BY u.user_id, u.ad_source, u.device, u.age_group, u.region) SELECT ad_source, device, age_group, COUNT(*) as high_ltv_users, ROUND(AVG(ltv), 0) as avg_ltv FROM user_ltv WHERE ltv >= 5000 GROUP BY ad_source, device, age_group ORDER BY high_ltv_users DESC LIMIT 10;",
+      "relatedSyntax": ["with", "left-join", "coalesce", "avg", "group-by", "having"]
+    }
+  ]
+}

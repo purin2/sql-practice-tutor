@@ -1,0 +1,76 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "description": "ユーザー情報（流入元、デバイス等）",
+      "columns": [
+        { "name": "user_id", "type": "STRING", "description": "ユーザーID（例: U00001）", "isPrimaryKey": true },
+        { "name": "ad_source", "type": "STRING", "description": "広告流入元（meta, google, twitter, tiktok, organic）" },
+        { "name": "campaign", "type": "STRING", "description": "キャンペーン名（例: meta_brand_awareness）" },
+        { "name": "device", "type": "STRING", "description": "デバイス（ios, android）" },
+        { "name": "age_group", "type": "STRING", "description": "年齢層（18-24, 25-34, 35-44, 45+）" },
+        { "name": "region", "type": "STRING", "description": "地域（関東, 関西, 中部, 九州, その他）" },
+        { "name": "registered_at", "type": "DATETIME", "description": "登録日時" }
+      ],
+      "relations": [],
+      "sampleData": [
+        { "user_id": "U00001", "ad_source": "meta", "campaign": "meta_brand_awareness", "device": "ios", "age_group": "25-34", "region": "関東", "registered_at": "2024-07-15 10:30:00" },
+        { "user_id": "U00002", "ad_source": "google", "campaign": "google_search", "device": "android", "age_group": "35-44", "region": "関西", "registered_at": "2024-07-20 14:15:00" },
+        { "user_id": "U00003", "ad_source": "organic", "campaign": "organic_direct", "device": "ios", "age_group": "18-24", "region": "中部", "registered_at": "2024-08-01 09:00:00" }
+      ]
+    },
+    {
+      "name": "payments",
+      "description": "課金履歴",
+      "columns": [
+        { "name": "payment_id", "type": "STRING", "description": "課金ID（例: P000001）", "isPrimaryKey": true },
+        { "name": "user_id", "type": "STRING", "description": "ユーザーID", "isForeignKey": true },
+        { "name": "amount", "type": "INTEGER", "description": "課金額（円）" },
+        { "name": "payment_date", "type": "DATETIME", "description": "課金日時" }
+      ],
+      "relations": [
+        { "fromColumn": "user_id", "toTable": "users", "toColumn": "user_id", "type": "many-to-one" }
+      ],
+      "sampleData": [
+        { "payment_id": "P000001", "user_id": "U00001", "amount": 2500, "payment_date": "2024-07-20 12:00:00" },
+        { "payment_id": "P000002", "user_id": "U00001", "amount": 3000, "payment_date": "2024-08-15 18:30:00" },
+        { "payment_id": "P000003", "user_id": "U00003", "amount": 4500, "payment_date": "2024-08-10 10:00:00" }
+      ]
+    },
+    {
+      "name": "events",
+      "description": "アプリ内行動ログ",
+      "columns": [
+        { "name": "event_id", "type": "STRING", "description": "イベントID（例: E0000001）", "isPrimaryKey": true },
+        { "name": "user_id", "type": "STRING", "description": "ユーザーID", "isForeignKey": true },
+        { "name": "event_type", "type": "STRING", "description": "イベント種別（app_open, view_content, add_to_cart, purchase, share）" },
+        { "name": "event_date", "type": "DATETIME", "description": "イベント発生日時" }
+      ],
+      "relations": [
+        { "fromColumn": "user_id", "toTable": "users", "toColumn": "user_id", "type": "many-to-one" }
+      ],
+      "sampleData": [
+        { "event_id": "E0000001", "user_id": "U00001", "event_type": "app_open", "event_date": "2024-07-15 10:35:00" },
+        { "event_id": "E0000002", "user_id": "U00001", "event_type": "view_content", "event_date": "2024-07-15 10:40:00" },
+        { "event_id": "E0000003", "user_id": "U00001", "event_type": "purchase", "event_date": "2024-07-20 12:00:00" }
+      ]
+    },
+    {
+      "name": "ad_costs",
+      "description": "月別広告費用",
+      "columns": [
+        { "name": "id", "type": "INTEGER", "description": "レコードID", "isPrimaryKey": true },
+        { "name": "month", "type": "STRING", "description": "月（YYYY-MM形式）" },
+        { "name": "ad_source", "type": "STRING", "description": "広告ソース" },
+        { "name": "campaign", "type": "STRING", "description": "キャンペーン名" },
+        { "name": "cost", "type": "INTEGER", "description": "広告費用（円）" }
+      ],
+      "relations": [],
+      "sampleData": [
+        { "id": 1, "month": "2024-07", "ad_source": "meta", "campaign": "meta_brand_awareness", "cost": 180000 },
+        { "id": 2, "month": "2024-07", "ad_source": "google", "campaign": "google_search", "cost": 150000 },
+        { "id": 3, "month": "2024-07", "ad_source": "twitter", "campaign": "twitter_engagement", "cost": 80000 }
+      ]
+    }
+  ]
+}
