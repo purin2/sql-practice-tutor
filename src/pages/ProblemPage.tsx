@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Check } from 'lucide-react';
+import { ArrowLeft, Save, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ export function ProblemPage({ problems }: ProblemPageProps) {
   const problem = problems.find((p) => p.id === id);
   const { progress, markCompleted, markIncomplete, saveQuery } = useProgress();
   const [query, setQuery] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const isCompleted = problem ? progress.completedProblems.includes(problem.id) : false;
 
@@ -46,18 +47,34 @@ export function ProblemPage({ problems }: ProblemPageProps) {
     );
   }
 
-  const handleSave = () => {
-    saveQuery(problem.id, query);
-  };
-
-  const toggleComplete = () => {
-    if (isCompleted) {
-      markIncomplete(problem.id);
-    } else {
-      markCompleted(problem.id);
+  const handleSave = useCallback(() => {
+    try {
+      setSaveStatus('saving');
+      console.log('[ProblemPage] Saving query for problem:', problem.id);
       saveQuery(problem.id, query);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('[ProblemPage] Save error:', error);
+      setSaveStatus('error');
+      alert(`保存エラー: ${error}`);
     }
-  };
+  }, [problem.id, query, saveQuery]);
+
+  const toggleComplete = useCallback(() => {
+    try {
+      console.log('[ProblemPage] Toggling complete for problem:', problem.id, 'current:', isCompleted);
+      if (isCompleted) {
+        markIncomplete(problem.id);
+      } else {
+        markCompleted(problem.id);
+        saveQuery(problem.id, query);
+      }
+    } catch (error) {
+      console.error('[ProblemPage] Toggle complete error:', error);
+      alert(`エラー: ${error}`);
+    }
+  }, [problem.id, query, isCompleted, markCompleted, markIncomplete, saveQuery]);
 
   return (
     <div className="space-y-6">
@@ -114,9 +131,20 @@ export function ProblemPage({ problems }: ProblemPageProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">SQLエディタ</h2>
-            <Button variant="outline" size="sm" onClick={handleSave}>
-              <Save className="mr-2 h-4 w-4" />
-              保存
+            <Button
+              variant={saveStatus === 'saved' ? 'default' : 'outline'}
+              size="sm"
+              onClick={handleSave}
+              disabled={saveStatus === 'saving'}
+            >
+              {saveStatus === 'saving' ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : saveStatus === 'saved' ? (
+                <Check className="mr-2 h-4 w-4" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {saveStatus === 'saved' ? '保存済み' : saveStatus === 'saving' ? '保存中...' : '保存'}
             </Button>
           </div>
           <SQLEditor
