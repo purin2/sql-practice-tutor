@@ -7,6 +7,7 @@ import { ProblemPage } from '@/pages/ProblemPage';
 import { SchemaPage } from '@/pages/SchemaPage';
 import { ReferencePage } from '@/pages/ReferencePage';
 import { ProgressPage } from '@/pages/ProgressPage';
+import { GuidePage } from '@/pages/GuidePage';
 import problemsData from '@/data/problems.json';
 import schemaData from '@/data/schema.json';
 import referencesData from '@/data/references.json';
@@ -29,6 +30,7 @@ function App() {
               <Route path="/reference" element={<ReferencePage references={references} problems={problems} />} />
               <Route path="/reference/:topic" element={<ReferencePage references={references} problems={problems} />} />
               <Route path="/progress" element={<ProgressPage problems={problems} />} />
+              <Route path="/guide" element={<GuidePage />} />
             </Route>
           </Routes>
         </ProgressProvider>

@@ -41,6 +41,9 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
           <Link to="/progress" className="text-foreground/60 hover:text-foreground transition-colors">
             進捗
           </Link>
+          <Link to="/guide" className="text-foreground/60 hover:text-foreground transition-colors">
+            使い方
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center space-x-2">

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FileText, Database, BookOpen, BarChart3, CheckCircle2 } from 'lucide-react';
+import { FileText, Database, BookOpen, BarChart3, CheckCircle2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProgress } from '@/contexts/ProgressContext';
 import type { Problem } from '@/types';
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/schema', icon: Database, label: 'スキーマ' },
   { to: '/reference', icon: BookOpen, label: 'リファレンス' },
   { to: '/progress', icon: BarChart3, label: '進捗' },
+  { to: '/guide', icon: HelpCircle, label: '使い方' },
 ];
 
 export function Sidebar({ problems, isOpen, onClose }: SidebarProps) {
