@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Check, Loader2, Play, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SQLEditor } from '@/components/editor/SQLEditor';
 import { HintSection } from '@/components/hint/HintSection';
 import { useProgress } from '@/contexts/ProgressContext';
+import { useDatabase, type QueryResult } from '@/hooks/useDatabase';
 import { DIFFICULTY_LABELS, CATEGORY_LABELS, type Problem } from '@/types';
 
 interface ProblemPageProps {
@@ -17,8 +18,13 @@ export function ProblemPage({ problems }: ProblemPageProps) {
   const { id } = useParams<{ id: string }>();
   const problem = problems.find((p) => p.id === id);
   const { progress, markCompleted, markIncomplete, saveQuery } = useProgress();
+  const { isLoading: dbLoading, initError: dbError, executeQuery } = useDatabase();
+
   const [query, setQuery] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [execStatus, setExecStatus] = useState<'idle' | 'running'>('idle');
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
 
   const isCompleted = problem ? progress.completedProblems.includes(problem.id) : false;
 
@@ -32,6 +38,12 @@ export function ProblemPage({ problems }: ProblemPageProps) {
       }
     }
   }, [problem, progress.queryHistory]);
+
+  // Reset results when query changes
+  useEffect(() => {
+    setQueryResult(null);
+    setQueryError(null);
+  }, [query]);
 
   if (!problem) {
     return (
@@ -60,6 +72,27 @@ export function ProblemPage({ problems }: ProblemPageProps) {
       alert(`保存エラー: ${error}`);
     }
   }, [problem.id, query, saveQuery]);
+
+  const handleExecute = useCallback(() => {
+    setExecStatus('running');
+    setQueryResult(null);
+    setQueryError(null);
+
+    // Small delay to show loading state
+    setTimeout(() => {
+      const { result, error } = executeQuery(query);
+
+      if (error) {
+        setQueryError(error.message);
+        console.error('[ProblemPage] Query execution error:', error.message);
+      } else if (result) {
+        setQueryResult(result);
+        console.log('[ProblemPage] Query executed successfully:', result);
+      }
+
+      setExecStatus('idle');
+    }, 100);
+  }, [query, executeQuery]);
 
   const toggleComplete = useCallback(() => {
     try {
@@ -131,27 +164,113 @@ export function ProblemPage({ problems }: ProblemPageProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">SQLエディタ</h2>
-            <Button
-              variant={saveStatus === 'saved' ? 'default' : 'outline'}
-              size="sm"
-              onClick={handleSave}
-              disabled={saveStatus === 'saving'}
-            >
-              {saveStatus === 'saving' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : saveStatus === 'saved' ? (
-                <Check className="mr-2 h-4 w-4" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              {saveStatus === 'saved' ? '保存済み' : saveStatus === 'saving' ? '保存中...' : '保存'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleExecute}
+                disabled={dbLoading || execStatus === 'running'}
+              >
+                {execStatus === 'running' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="mr-2 h-4 w-4" />
+                )}
+                {dbLoading ? '読込中...' : execStatus === 'running' ? '実行中...' : '実行'}
+              </Button>
+              <Button
+                variant={saveStatus === 'saved' ? 'default' : 'outline'}
+                size="sm"
+                onClick={handleSave}
+                disabled={saveStatus === 'saving'}
+              >
+                {saveStatus === 'saving' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : saveStatus === 'saved' ? (
+                  <Check className="mr-2 h-4 w-4" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                {saveStatus === 'saved' ? '保存済み' : saveStatus === 'saving' ? '保存中...' : '保存'}
+              </Button>
+            </div>
           </div>
+
           <SQLEditor
             value={query}
             onChange={setQuery}
             className="min-h-[300px]"
           />
+
+          {/* Database initialization error */}
+          {dbError && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive text-destructive">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">データベース初期化エラー</p>
+                  <p className="text-sm mt-1">{dbError}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Query error */}
+          {queryError && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive text-destructive">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">SQLエラー</p>
+                  <p className="text-sm mt-1 font-mono">{queryError}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Query result */}
+          {queryResult && (
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  実行結果 ({queryResult.values.length} 行)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        {queryResult.columns.map((col, i) => (
+                          <th key={i} className="text-left py-2 px-3 font-mono font-medium">
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {queryResult.values.map((row, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          {row.map((cell, j) => (
+                            <td key={j} className="py-2 px-3 font-mono text-xs">
+                              {cell === null ? (
+                                <span className="text-muted-foreground">NULL</span>
+                              ) : cell instanceof Uint8Array ? (
+                                <span className="text-muted-foreground">[BLOB]</span>
+                              ) : (
+                                String(cell)
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <HintSection
